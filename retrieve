@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+from tools import CopyFilesBack
+
+
+parser = argparse.ArgumentParser(add_help=True, description = 'copies files back from Raijin')
+
+parser.add_argument('-s', '--seconds',
+                        dest='seconds',
+                        type=int,
+                        help='from the last n seconds')
+
+parser.add_argument('-m', '--minutes',
+                        type=int, 
+                        dest="minutes",
+                        help='from the last n minutes')
+
+parser.add_argument('-hr', '--hour', 
+                        type=int, 
+                        dest="hours",
+                        help='from the last n hours')
+
+parser.add_argument('-d', '--days',
+                        type=int, 
+                        dest="days",
+                        help='from the last n days')
+
+parser.add_argument('-w', '--weeks',
+                        type=int, 
+                        dest="weeks",
+                        help='from the last n weeks')
+
+parser.add_argument('--clear-home', 
+                        action="store_true",
+                        dest="clear_home",
+                        help='clear record files on home computer')
+
+parser.add_argument('--clear-remote', 
+                        action="store_true",
+                        dest="clear_remote",
+                        help='clear record files on remote computer')
+
+parser.add_argument('--clearall', 
+                        action="store_true",
+                        dest="clear_all",
+                        help='clear record files on all computers')
+
+parser.add_argument('--noe', 
+                        action="store_false",
+                        dest="include_oe",
+                        help="Don't copy back stdout and stderr files as well.")
+
+
+args = parser.parse_args(sys.argv[1:])
+
+CopyFilesBack(**vars(args))

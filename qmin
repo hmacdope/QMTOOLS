@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+import os
+from formats import qm_packages
+from utils import style, get_environment
+
+theory = {
+    "M062X" : "M062X",
+    "B97D3" : "B97D3",
+    "B3LYP" : "B3LYP",  
+    "M06L"  : "M06L",
+    "CSD"   : "CSD",
+    "QCI"   : "QCI",
+    "MP2"   : "MP2",
+    "HF"    : "HF",
+    "CCSDT" : "CCSDT",
+    "CCSD-T": "CCSD(T)"
+}
+
+parser = argparse.ArgumentParser(add_help=True, description = 'takes a coordinate file and sets up an input file. ')
+parser.add_argument('file', 
+                        nargs="+",
+                        help='input file -- anything parseable by mdtraj or a Gaussian log file')
+parser.add_argument('-p', 
+                        type=str, 
+                        dest="program",
+                        choices=["gaussian", "qchem", "molpro"],
+                        default="gaussian",
+                        help='software package (default: gaussian)')
+parser.add_argument('-i',
+                        dest="interactive",
+                        action="store_true",
+                        help="Interactive prompts."
+                        )
+parser.add_argument('--show',
+                        dest="show",
+                        action="store_true",
+                        help='Print file when finished.'
+                        )
+parser.add_argument('--opt',
+                        dest="optimize",
+                        action="store_true",
+                        help="Optimize geometry."
+                        )
+parser.add_argument('--freq',
+                        dest="calculate_frequencies",
+                        action="store_true",
+                        help="Calculate frequencies."
+                        )
+parser.add_argument('--solvate',
+                        dest="solvate",
+                        nargs="*",
+                        choices=["SMD", "toluene", "etac", "water", "Octanol","Pentadecane"],
+                        help="Solvate molecule [solvent [solvent model]].",
+                        )
+
+parser.add_argument('--norass',
+                        dest="rassolov",
+                        action="store_false",
+                        help="Don't use a Rassolov basis set.",
+                        )
+
+parser.add_argument('-b',
+                        dest="basis",
+                        choices = ("sto3g", "321", "6-31G", "6-31G*", "6-31+G*", 
+                                        "6-31G(d)", "6-31+G(d)", "G3largeXP", 
+                                        "GTMP2LARGE", "AUG-cc-pVDZ", "HF6Z", "HFQZ", "Br.aug-cc-pvtz-DK",
+                                        "Br.aug-cc-pvtz", "Br.cc-pvtz-DK", "Br.cc-pvtz",
+                                        "C.6-311pG-3df", "C.g3mp2large", "H.6-311pG-2p",
+                                        "H.g3mp2large", "g3xlarge"), # TO DO: make this case insensitive
+                        default="6-31+G*",
+                        help="Basis set (default: 6-31+G*)."
+                        )
+
+parser.add_argument('-t',
+                        dest="theory",
+                        choices=theory,
+                        type=str.upper,
+                        default="MP2",
+                        help="Level of theory (default: MP2)."
+                        )
+parser.add_argument('-m',
+                        dest="multiplicity",
+                        type=int,
+                        default=1,
+                        help="Multiplicity (default: 1)."
+                        )
+parser.add_argument('-c',
+                        dest="charge",
+                        type=int,
+                        default=0,
+                        help="Charge (default: 0)."
+                        )
+parser.add_argument('--nbo',
+                        dest="NBO",
+                        action = "store_true",
+                        default=False,
+                        help="do NBO analysis"
+)
+
+parser.add_argument('--bsse',
+                    dest="bsse",
+                    action = "store_true",
+                    default=False,
+                    help="do bsse analysis"
+                    )
+
+parser.add_argument('--eda',
+                    dest = "eda",
+                    action = "store_true",
+                    default = False,
+                    help = 'do eda analysis'
+                    )
+
+parser.add_argument('--calcfc',
+                    dest = "calcfc",
+                    action = "store_true",
+                    default = False,
+                    help = 'calculate force constants'
+                    )
+parser.add_argument('--carboxybind',
+                    dest = 'carboxybind',
+                    action = 'store_true',
+                    default = False,
+                    help = 'fragments for carboxylate binding'
+                    )
+parser.add_argument('--wfn',
+                    dest = 'wfn',
+                    action = 'store_true',
+                    default = False,
+                    help = 'output a .wfn wavefunction file'
+                    )
+args = parser.parse_args(sys.argv[1:])
+
+
+
+env = get_environment()
+
+
+print(style(f"""
+    #######################################
+    #        STARTING   JOB  INPUT        #
+    #######################################
+
+    Software: {args.program.capitalize()}
+    """, "yellow"))
+
+vargs = dict(**vars(args))
+vargs['theory'] = theory[vargs['theory']]
+vargs.pop("file")
+
+for file in args.file:
+    qm_packages[args.program](file, **vargs, **env)
+
